@@ -43,7 +43,7 @@
                 @endforelse
             </tbody>
         </table>
-        {{ $records->links() }}
+       {{ $records->onEachSide(1)->links('pagination::bootstrap-5') }}
     </div>
 
     <!-- Charts Section -->
