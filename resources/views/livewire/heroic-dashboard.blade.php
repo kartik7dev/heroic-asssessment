@@ -1,14 +1,9 @@
-<style>
-  #resolutionChart {
-    height: 249px !important;
-  }
-</style>
 <div>
     
     <!-- Dropdown Section -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h4 class="fw-bold">HEROIC Cyber Breach Data</h4>
-        <select wire:model="selectedIdentity" class="form-select w-auto">
+        <select wire:model.live="selected" class="form-select w-auto">
             <option value="all">All Identities</option>
             @foreach($identities as $identity)
                 <option value="{{ $identity->id }}">{{ $identity->email }}</option>
@@ -69,14 +64,13 @@
 </div>
 
 <script>
-  console.log("Livewire: ", window.Livewire);
+  console.log('Heroic Dashboard script loaded',window.Livewire);
   if(window.Livewire) {
         let resolutionChart = null;
     let severityChart = null;
 
     function renderCharts(resolutionData, severityData) {
         // Destroy previous charts if exist
-        console.log("Rendering charts with data:", resolutionData, severityData);
         if(resolutionChart) resolutionChart.destroy();
         if(severityChart) severityChart.destroy();
 
@@ -117,7 +111,7 @@
 
         // Refresh on Livewire event
         Livewire.on('refreshCharts', (payload) => {
-            renderCharts(payload.resolution, payload.severity);
+            renderCharts(payload[0].resolution, payload[0].severity);
         });
     });
   }

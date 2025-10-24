@@ -5,64 +5,66 @@ namespace App\Livewire;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Identity;
+use Livewire\Attributes\Computed;
 use App\Models\BreachEvent;
 
 class HeroicDashboard extends Component
 {
    use WithPagination;
 
-    public $selectedIdentity = 'all';
+   protected $paginationTheme = 'bootstrap';
+
+    public $selected = 'all';
     public $identities;
+    public array $resolutionStats = [];
+    public array $severityStats = [];
 
     public function mount()
     {
         $this->identities = Identity::all();
+        $this->updateStats();
     }
 
-    public function updatingSelectedIdentity()
+    public function updatedSelected($value)
     {
-        $this->resetPage();
+        $this->updateStats();
+        $this->dispatch('refreshCharts', [
+            'resolution' => array_values($this->resolutionStats),
+            'severity' => array_values($this->severityStats),
+        ]);
     }
 
-    public function getRecordsProperty()
-    {
-        $query = BreachEvent::with('identity');
-
-        if ($this->selectedIdentity !== 'all') {
-            $query->where('identity_id', $this->selectedIdentity);
-        }
-
-        return $query->paginate(10);
-    }
-
-    public function getResolutionStatsProperty()
+    protected function updateStats(): void
     {
         $baseQuery = BreachEvent::query();
 
-        if ($this->selectedIdentity !== 'all') {
-            $baseQuery->where('identity_id', $this->selectedIdentity);
+        if ($this->selected !== 'all') {
+            $baseQuery->where('identity_id', $this->selected);
         }
-
-        return [
+        
+        $this->resolutionStats = [
             'resolved' => (clone $baseQuery)->where('status', 'Resolved')->count(),
             'unresolved' => (clone $baseQuery)->where('status', 'Unresolved')->count(),
         ];
-    }
-
-    public function getSeverityStatsProperty()
-    {
-        $baseQuery = BreachEvent::query();
-
-        if ($this->selectedIdentity !== 'all') {
-            $baseQuery->where('identity_id', $this->selectedIdentity);
-        }
-
-        return [
+        
+        $this->severityStats = [
             'Critical' => (clone $baseQuery)->where('severity', 'Critical')->count(),
             'High' => (clone $baseQuery)->where('severity', 'High')->count(),
             'Medium' => (clone $baseQuery)->where('severity', 'Medium')->count(),
             'Low' => (clone $baseQuery)->where('severity', 'Low')->count(),
         ];
+    }
+
+    #[Computed]
+    public function getRecordsProperty()
+    {
+        $query = BreachEvent::with('identity');
+
+        if ($this->selected !== 'all') {
+            $query->where('identity_id', $this->selected);
+        }
+
+        return $query->paginate(10);
     }
 
     public function render()
@@ -71,18 +73,6 @@ class HeroicDashboard extends Component
             'records' => $this->records,
             'resolutionStats' => $this->resolutionStats,
             'severityStats' => $this->severityStats,
-        ])->layout('layouts.app');
-    }
-
-    protected $listeners = ['refreshCharts' => '$refresh'];
-
-    public function updatedSelectedIdentity()
-    {
-        $this->resetPage();
-        $this->emit('refreshCharts', [
-            'resolution' => array_values($this->resolutionStats),
-            'severity' => array_values($this->severityStats),
         ]);
     }
-
 }
