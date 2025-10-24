@@ -37,31 +37,31 @@ class HeroicDashboard extends Component
 
     public function getResolutionStatsProperty()
     {
-        $query = BreachEvent::query();
+        $baseQuery = BreachEvent::query();
 
         if ($this->selectedIdentity !== 'all') {
-            $query->where('identity_id', $this->selectedIdentity);
+            $baseQuery->where('identity_id', $this->selectedIdentity);
         }
 
         return [
-            'resolved' => $query->where('status', 'Resolved')->count(),
-            'unresolved' => $query->where('status', 'Unresolved')->count(),
+            'resolved' => (clone $baseQuery)->where('status', 'Resolved')->count(),
+            'unresolved' => (clone $baseQuery)->where('status', 'Unresolved')->count(),
         ];
     }
 
     public function getSeverityStatsProperty()
     {
-        $query = BreachEvent::query();
+        $baseQuery = BreachEvent::query();
 
         if ($this->selectedIdentity !== 'all') {
-            $query->where('identity_id', $this->selectedIdentity);
+            $baseQuery->where('identity_id', $this->selectedIdentity);
         }
 
         return [
-            'Critical' => $query->where('severity', 'Critical')->count(),
-            'High' => $query->where('severity', 'High')->count(),
-            'Medium' => $query->where('severity', 'Medium')->count(),
-            'Low' => $query->where('severity', 'Low')->count(),
+            'Critical' => (clone $baseQuery)->where('severity', 'Critical')->count(),
+            'High' => (clone $baseQuery)->where('severity', 'High')->count(),
+            'Medium' => (clone $baseQuery)->where('severity', 'Medium')->count(),
+            'Low' => (clone $baseQuery)->where('severity', 'Low')->count(),
         ];
     }
 
@@ -73,4 +73,16 @@ class HeroicDashboard extends Component
             'severityStats' => $this->severityStats,
         ])->layout('layouts.app');
     }
+
+    protected $listeners = ['refreshCharts' => '$refresh'];
+
+    public function updatedSelectedIdentity()
+    {
+        $this->resetPage();
+        $this->emit('refreshCharts', [
+            'resolution' => array_values($this->resolutionStats),
+            'severity' => array_values($this->severityStats),
+        ]);
+    }
+
 }

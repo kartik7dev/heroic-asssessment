@@ -1,3 +1,8 @@
+<style>
+  #resolutionChart {
+    height: 249px !important;
+  }
+</style>
 <div>
     
     <!-- Dropdown Section -->
@@ -64,38 +69,59 @@
 </div>
 
 <script>
-    document.addEventListener('livewire:load', function () {
-        const resolutionCtx = document.getElementById('resolutionChart');
-        const severityCtx = document.getElementById('severityChart');
+  console.log("Livewire: ", window.Livewire);
+  if(window.Livewire) {
+        let resolutionChart = null;
+    let severityChart = null;
 
-        new Chart(resolutionCtx, {
+    function renderCharts(resolutionData, severityData) {
+        // Destroy previous charts if exist
+        console.log("Rendering charts with data:", resolutionData, severityData);
+        if(resolutionChart) resolutionChart.destroy();
+        if(severityChart) severityChart.destroy();
+
+        const resolutionCtx = document.getElementById('resolutionChart').getContext('2d');
+        const severityCtx = document.getElementById('severityChart').getContext('2d');
+
+        resolutionChart = new Chart(resolutionCtx, {
             type: 'doughnut',
             data: {
                 labels: ['Resolved', 'Unresolved'],
                 datasets: [{
-                    data: [{{ $resolutionStats['resolved'] }}, {{ $resolutionStats['unresolved'] }}],
+                    data: resolutionData,
                     backgroundColor: ['#28a745', '#dc3545']
                 }]
             }
         });
 
-        new Chart(severityCtx, {
+        severityChart = new Chart(severityCtx, {
             type: 'bar',
             data: {
                 labels: ['Critical', 'High', 'Medium', 'Low'],
                 datasets: [{
                     label: 'Breach Count',
-                    data: [
-                      {{ $severityStats['Critical'] }},
-                      {{ $severityStats['High'] }},
-                      {{ $severityStats['Medium'] }},
-                      {{ $severityStats['Low'] }}
-                    ],
+                    data: severityData,
                     backgroundColor: ['#dc3545', '#fd7e14', '#ffc107', '#198754']
                 }]
             },
             options: { scales: { y: { beginAtZero: true } } }
         });
+    }
+
+   document.addEventListener('DOMContentLoaded', function () {
+        // Initial render using blade vars (for SSR/hydration)
+        renderCharts(
+            @json(array_values($resolutionStats)),
+            @json(array_values($severityStats))
+        );
+
+        // Refresh on Livewire event
+        Livewire.on('refreshCharts', (payload) => {
+            renderCharts(payload.resolution, payload.severity);
+        });
     });
+  }
+    
 </script>
+
 
