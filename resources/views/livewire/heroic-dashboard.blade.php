@@ -33,7 +33,7 @@
                         <td>{{ $record->date->format('m-d-Y') }}</td>
                         <td>{{ $record->severity }}</td>
                         <td>{{ $record->status }}</td>
-                        <td>{{ $record->data_types }}</td>
+                        <td>{{ is_array($record->data_types) ? implode(', ', $record->data_types) : $record->data_types }}</td>
                         <td><a href="{{ $record->endpoint }}" target="_blank">{{ $record->endpoint }}</a></td>
                     </tr>
                 @empty
@@ -68,25 +68,29 @@
         const resolutionCtx = document.getElementById('resolutionChart');
         const severityCtx = document.getElementById('severityChart');
 
-        // Example dummy chart data
-        const resolutionChart = new Chart(resolutionCtx, {
+        new Chart(resolutionCtx, {
             type: 'doughnut',
             data: {
                 labels: ['Resolved', 'Unresolved'],
                 datasets: [{
-                    data: [70, 30],
+                    data: [{{ $resolutionStats['resolved'] }}, {{ $resolutionStats['unresolved'] }}],
                     backgroundColor: ['#28a745', '#dc3545']
                 }]
             }
         });
 
-        const severityChart = new Chart(severityCtx, {
+        new Chart(severityCtx, {
             type: 'bar',
             data: {
                 labels: ['Critical', 'High', 'Medium', 'Low'],
                 datasets: [{
                     label: 'Breach Count',
-                    data: [12, 24, 36, 18],
+                    data: [
+                      {{ $severityStats['Critical'] }},
+                      {{ $severityStats['High'] }},
+                      {{ $severityStats['Medium'] }},
+                      {{ $severityStats['Low'] }}
+                    ],
                     backgroundColor: ['#dc3545', '#fd7e14', '#ffc107', '#198754']
                 }]
             },
@@ -94,3 +98,4 @@
         });
     });
 </script>
+
